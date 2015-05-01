@@ -5,6 +5,7 @@ import flask
 import flask_bootstrap
 from html5lib import tokenizer
 from html5lib import constants
+import requests
 
 
 class TagLoc(object):
@@ -88,10 +89,19 @@ def index():
 
 @app.route('/api/v1/describe-page')
 def describe_page():
-    return flask.jsonify({})
+    url = flask.request.args.get('url')
+    r = requests.get(url)
+    if r.status_code == requests.codes.ok:
+        tag_locations = parse_tag_locations(r.text)
+        tag_counts = count_tags(tag_locations)
+        highlighted_html = add_spans_to_html(r.text, tag_locations)
+        return flask.jsonify({'success': True,
+                              'tag_counts': tag_counts,
+                              'highlighted_html': highlighted_html})
+    else:
+        return flask.jsonify({'success': False})
 
 
 if __name__ == '__main__':
     flask_bootstrap.Bootstrap(app)
     app.run(debug=True)
-
