@@ -37,3 +37,10 @@ class AddSpansToHtmlTestCase(unittest.TestCase):
         formatted = tag_highlight.add_spans_to_html(html, tls)
         self.assertEqual('&amp;amp;<span class="tag-p">&lt;p/&gt;</span>' +
             '&amp;lt;<span class="tag-p">&lt;p/&gt;</span>&amp;gt;', formatted)
+
+class CountTagsTestCase(unittest.TestCase):
+    def test_count(self):
+        html = '<i></i><p/><a></a><a></a>'
+        tls = tag_highlight.parse_tag_locations(html)
+        counts = tag_highlight.count_tags(tls)
+        self.assertEqual({'i': 1, 'p': 1, 'a': 2}, counts)

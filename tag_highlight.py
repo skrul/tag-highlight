@@ -1,10 +1,11 @@
 #!/usr/bin/env python
+import collections
 import cgi
 import flask
 import flask_bootstrap
-import html5lib
 from html5lib import tokenizer
 from html5lib import constants
+
 
 class TagLoc(object):
     def __init__(self, name, type, offset, length):
@@ -15,6 +16,7 @@ class TagLoc(object):
 
     def __repr__(self):
         return '<%s> %d @%d,%d' % (self.name, self.type, self.offset, self.length)
+
 
 def parse_tag_locations(html):
     row_start_offsets = []
@@ -44,26 +46,33 @@ def parse_tag_locations(html):
         if tag_start_pos < 0:
             continue
             
-        tag_location = TagLoc(token['name'], token['type'], tag_start_pos,
-                              tag_end_pos - tag_start_pos)
-        tag_locations.append(tag_location)
+        tl = TagLoc(token['name'], token['type'], tag_start_pos,
+                    tag_end_pos - tag_start_pos)
+        tag_locations.append(tl)
 
     return tag_locations
+
+
+def count_tags(tag_locations):
+    counts = collections.Counter()
+    for tl in tag_locations:
+        if tl.type == constants.tokenTypes['StartTag']:
+            counts[tl.name] += 1
+    return counts
+
 
 def add_spans_to_html(html, tag_locations):
     out = []
     pos = 0
-    for tag_location in tag_locations:
-        # Add a <span> around each tag whle escaping all other contnet.
-        if tag_location.offset > pos:
-            out.append(cgi.escape(html[pos:tag_location.offset]))
-            pos = tag_location.offset
+    for tl in tag_locations:
+        # Add a <span> around each tag whle escaping all other content.
+        if tl.offset > pos:
+            out.append(cgi.escape(html[pos:tl.offset]))
+            pos = tl.offset
 
-        name = tag_location.name
-        out.append('<span class="tag-%s">' % name)
-        out.append(cgi.escape(
-            html[tag_location.offset:tag_location.offset + tag_location.length]))
-        pos += tag_location.length
+        out.append('<span class="tag-%s">' % tl.name)
+        out.append(cgi.escape(html[tl.offset:tl.offset + tl.length]))
+        pos += tl.length
         out.append('</span>')
 
     out.append(cgi.escape(html[pos:]))
@@ -82,8 +91,7 @@ def describe_page():
     return flask.jsonify({})
 
 
-
 if __name__ == '__main__':
     flask_bootstrap.Bootstrap(app)
     app.run(debug=True)
-    
+
