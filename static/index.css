@@ -1,0 +1,23 @@
+.navbar-brand img {
+    width: 60px;
+    height: 18px;
+    float: left;
+    margin-top: 2px;
+    margin-right: 15px;
+}
+
+.navbar-brand span {
+    color: #404b55;
+}
+
+.navbar-default {
+    background-color: #fff;
+}
+
+#stats-table tbody {
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -ms-user-select: none;
+}
