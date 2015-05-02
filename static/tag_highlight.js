@@ -10,10 +10,12 @@ var statsTable = (function() {
     for (var i = 0; i < rows.length; i++) {
       var row = rows[i];
       var tr = $("<tr>");
-      tr.append("<td>" + row["name"] + "</td>");
-      tr.append("<td>" + row["count"] + "</td>");
+      for  (var j = 0; j < row.length; j++) {
+        tr.append("<td>" + row[j] + "</td>");
+      }
       tbody.append(tr);
     }
+    selectedRow = -1;
   }
 
   var selectedRowData = function() {
@@ -43,7 +45,6 @@ var statsTable = (function() {
     setData: setData
   }
 })();
-
 
 var sourceView = (function() {
   var root = $("#source-view");
@@ -84,21 +85,20 @@ $(function() {
         
         var rows = []
         for (var name in json.tag_counts) {
-          rows.push({name: name, count: json.tag_counts[name]});
+          rows.push([name, json.tag_counts[name]]);
         }
-        rows.sort(function(a, b) { return b.count - a.count });
+        rows.sort(function(a, b) { return b[1] - a[1] });
         statsTable.setData(rows);
-
-        $("#stats-table").on("row-selected", function() {
-          var data = statsTable.selectedRowData();
-          if (data) {
-            sourceView.highlightTag(data["name"]);
-          } else {
-            sourceView.highlightTag(null);
-          }
-        });
-
       }
     });
+  });
+
+  $("#stats-table").on("row-selected", function() {
+    var data = statsTable.selectedRowData();
+    if (data) {
+      sourceView.highlightTag(data[0]);
+    } else {
+      sourceView.highlightTag(null);
+    }
   });
 });
