@@ -19,6 +19,21 @@ class ParseTagLocationsTestCase(unittest.TestCase):
         self.assertEqual((13, 4), (tls[3].offset, tls[3].length))
         self.assertEqual('b', tls[3].name)
 
+    def test_tokenizer_state_script(self):
+        html = '<script><foo></script><bar>'
+        tls = tag_highlight.parse_tag_locations(html)
+        self.assertEqual(3, len(tls))
+
+    def test_tokenizer_state_textarea(self):
+        html = '<textarea><foo></textarea><bar>'
+        tls = tag_highlight.parse_tag_locations(html)
+        self.assertEqual(3, len(tls))
+
+    def test_tokenizer_state_plaintext(self):
+        html = '<plaintext><foo>'
+        tls = tag_highlight.parse_tag_locations(html)
+        self.assertEqual(1, len(tls))
+
 
 class AddSpansToHtmlTestCase(unittest.TestCase):
     def test_simple(self):

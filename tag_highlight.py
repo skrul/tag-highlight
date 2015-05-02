@@ -32,6 +32,17 @@ def parse_tag_locations(html):
     for token in tok:
         if not token['type'] in tag_types:
             continue
+
+        # The tokenizer needs to be manually switched to different
+        # states when certain tags are encountered.
+        if (token['type'] == constants.tokenTypes['StartTag']):
+            if (token['name'] == 'script'):
+                tok.state = tok.scriptDataState
+            elif (token['name'] == 'textarea'):
+                tok.state = tok.rcdataState
+            elif (token['name'] == 'plaintext'):
+                tok.state = tok.plaintextState
+
         # The stream position tells us the next character after the
         # current tag.  Search backwards from this point to find
         # the beginning of the tag.
