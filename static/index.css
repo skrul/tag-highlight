@@ -14,10 +14,37 @@
     background-color: #fff;
 }
 
+#form {
+    margin-bottom: 10px;
+}
+
 #stats-table tbody {
     cursor: pointer;
     -webkit-user-select: none;
     -moz-user-select: none;
     -khtml-user-select: none;
     -ms-user-select: none;
+}
+
+#source-view {
+    color: #333;
+}
+
+#spinner {
+    margin-left: 5px;
+}
+
+#error {
+    padding: 15px;
+}
+
+.spin {
+    animation:spin-animation 1s linear infinite;
+    -webkit-animation:spin-animation 1s linear infinite;
+}
+@keyframes spin-animation {
+    100% { transform:rotate(360deg); }
+}
+@-webkit-keyframes spin-animation {
+    100% { -webkit-transform: rotate(360deg); }
 }

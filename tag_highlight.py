@@ -4,6 +4,8 @@ import flask
 from html5lib import tokenizer
 from html5lib import constants
 import requests
+import re
+
 
 app = flask.Blueprint('tag-highlight', __name__, template_folder='templates',
                       static_folder='static')
@@ -99,7 +101,16 @@ def index():
 @app.route('/api/v1/describe-page')
 def describe_page():
     url = flask.request.args.get('url')
-    r = requests.get(url)
+
+    # Basic URL validity test.
+    if not re.match('^https?://.*\\..*', url):
+        return flask.jsonify({'success': False, 'message': 'Invalid URL'})
+    
+    try:
+        r = requests.get(url)
+    except IOError as e:
+        return flask.jsonify({'success': False, 'message': str(e)})
+
     if r.status_code == requests.codes.ok:
         tag_locations = parse_tag_locations(r.text)
         tag_counts = count_tags(tag_locations)
@@ -108,4 +119,4 @@ def describe_page():
                               'tag_counts': tag_counts,
                               'highlighted_html': highlighted_html})
     else:
-        return flask.jsonify({'success': False})
+        return flask.jsonify({'success': False, 'message': r.reason})

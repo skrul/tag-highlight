@@ -73,6 +73,9 @@ var sourceView = (function() {
 
 $(function() {
   $("#form").submit(function (e) {
+    $("#results-container").hide();
+    $("#spinner").show();
+    $("#error").hide();
     e.preventDefault();
     $.ajax({
       url: "/api/v1/describe-page",
@@ -80,7 +83,12 @@ $(function() {
       type: "GET",
       dataType: "json",
       success: function(json) {
-	//if error...
+        if (!json.success) {
+          $("#error").text("Server request failed: " + json.message);
+          $("#error").show();
+          return;
+        }
+
         sourceView.setSource(json.highlighted_html);
         
         var rows = []
@@ -89,6 +97,14 @@ $(function() {
         }
         rows.sort(function(a, b) { return b[1] - a[1] });
         statsTable.setData(rows);
+        $("#results-container").show();
+      },
+      error: function(xhr, status, error) {
+        $("#error").text("Server request failed: " + status);
+        $("#error").show();
+      },
+      complete: function(xhr, status) {
+        $("#spinner").hide();
       }
     });
   });
@@ -101,4 +117,8 @@ $(function() {
       sourceView.highlightTag(null);
     }
   });
+
+  $("#spinner").hide();
+  $("#results-container").hide();
+  $("#error").hide();
 });

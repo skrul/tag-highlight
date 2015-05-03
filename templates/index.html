@@ -30,10 +30,10 @@
       <input type="text" class="form-control" id="url" value="http://slack.com">
     </div>
     <button type="submit" id="submit" class="btn btn-default">Analyze!</button>
+    <span class="glyphicon glyphicon-refresh spin" id="spinner"></span>
   </form>
 
-
-  <div class="row">
+  <div class="row" id="results-container">
     <div class="col-md-2">
       <table class="table table-hover" id="stats-table">
         <thead>
@@ -46,12 +46,17 @@
         </tbody>
       </table>
     </div>
-    <div class="col-md-10">
+    <div class="col-md-10 well">
       <code id="source-view">
       </code>
     </div>
   </div>
+
+  <p id="error" class="bg-danger"></p>
+
 </div>
+
+
 {% endblock %}
 
 {% block head %}
