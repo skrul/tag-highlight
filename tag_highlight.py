@@ -1,12 +1,12 @@
-#!/usr/bin/env python
 import collections
 import cgi
 import flask
-import flask_bootstrap
 from html5lib import tokenizer
 from html5lib import constants
 import requests
 
+app = flask.Blueprint('tag-highlight', __name__, template_folder='templates',
+                      static_folder='static')
 
 class TagLoc(object):
     def __init__(self, name, type, offset, length):
@@ -91,8 +91,6 @@ def add_spans_to_html(html, tag_locations):
     return ''.join(out)
 
 
-app = flask.Flask(__name__)
-
 @app.route('/')
 def index():
     return flask.render_template('index.html')
@@ -111,8 +109,3 @@ def describe_page():
                               'highlighted_html': highlighted_html})
     else:
         return flask.jsonify({'success': False})
-
-
-if __name__ == '__main__':
-    flask_bootstrap.Bootstrap(app)
-    app.run(debug=True)

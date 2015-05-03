@@ -1,4 +1,5 @@
 import tag_highlight
+import application
 
 import httpretty
 import json
@@ -68,7 +69,7 @@ class CountTagsTestCase(unittest.TestCase):
 
 class DescribePageTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = tag_highlight.app.test_client()
+        self.app = application.application.test_client()
 
     @httpretty.activate
     def test_success(self):
