@@ -81,7 +81,9 @@ function setState(state, errorMessage) {
     $("#results-container").hide();
     $("#error").hide();
   } else if (state == "loading") {
-    $("#spinner").show();
+    // Need to unhide the spinner with inline-block for the
+    // animation to work correctly.
+    $("#spinner").css("display", "inline-block");
     $("#results-container").hide();
     $("#error").hide();
   } else if (state == "done") {

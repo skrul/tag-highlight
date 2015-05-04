@@ -32,11 +32,17 @@
     word-wrap: break-word;
 }
 
+#results-container {
+    display: none;
+}
+
 #spinner {
+    display: none;
     margin-left: 5px;
 }
 
 #error {
+    display: none;
     padding: 15px;
 }
 
