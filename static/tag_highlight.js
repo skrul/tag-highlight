@@ -1,7 +1,10 @@
-"use strict";
+(function() {
+  "use strict";
+})();
 
+// Generic table widget controller with selectable rows.
 var statsTable = (function() {
-  var tbody = $("#stats-table > tbody")
+  var tbody = $("#stats-table > tbody");
   var selectedRow = -1;
   var rows = [];
   var setData = function(rowData) {
@@ -16,7 +19,7 @@ var statsTable = (function() {
       tbody.append(tr);
     }
     selectedRow = -1;
-  }
+  };
 
   var selectedRowData = function() {
     if (selectedRow < 0) {
@@ -24,7 +27,7 @@ var statsTable = (function() {
     } else {
       return rows[selectedRow];
     }
-  }
+  };
   
   tbody.click(function(e) {
     if (selectedRow >= 0) {
@@ -43,9 +46,10 @@ var statsTable = (function() {
   return {
     selectedRowData: selectedRowData,
     setData: setData
-  }
+  };
 })();
 
+// HTML source view controller that can highlight tags.
 var sourceView = (function() {
   var root = $("#source-view");
   var selectedTag = null;
@@ -53,7 +57,7 @@ var sourceView = (function() {
   var setSource = function(html) {
     root.html(html);
     highlightTag(null);
-  }
+  };
 
   var highlightTag = function(tagName) {
     if (selectedTag) {
@@ -63,20 +67,37 @@ var sourceView = (function() {
       root.find(".tag-" + tagName).css("background-color", "yellow");
     }
     selectedTag = tagName;
-  }
+  };
   
   return {
     setSource: setSource,
     highlightTag: highlightTag
-  }
+  };
 })();
+
+function setState(state, errorMessage) {
+  if (state == "start") {
+    $("#spinner").hide();
+    $("#results-container").hide();
+    $("#error").hide();
+  } else if (state == "loading") {
+    $("#spinner").show();
+    $("#results-container").hide();
+    $("#error").hide();
+  } else if (state == "done") {
+    $("#spinner").hide();
+    $("#results-container").show();
+  } else if (state == "error") {
+    $("#spinner").hide();
+    $("#error").text(errorMessage);
+    $("#error").show();
+  }
+}
 
 $(function() {
   $("#form").submit(function (e) {
-    $("#results-container").hide();
-    $("#spinner").show();
-    $("#error").hide();
     e.preventDefault();
+    setState("loading");
     $.ajax({
       url: "/api/v1/describe-page",
       data: {url: $("#url").val()},
@@ -84,27 +105,22 @@ $(function() {
       dataType: "json",
       success: function(json) {
         if (!json.success) {
-          $("#error").text("Server request failed: " + json.message);
-          $("#error").show();
+          setState("error", "Server request failed: " + json.message);
           return;
         }
 
         sourceView.setSource(json.highlighted_html);
         
-        var rows = []
+        var rows = [];
         for (var name in json.tag_counts) {
           rows.push([name, json.tag_counts[name]]);
         }
-        rows.sort(function(a, b) { return b[1] - a[1] });
+        rows.sort(function(a, b) { return b[1] - a[1]; });
         statsTable.setData(rows);
-        $("#results-container").show();
+        setState("done");
       },
       error: function(xhr, status, error) {
-        $("#error").text("Server request failed: " + status);
-        $("#error").show();
-      },
-      complete: function(xhr, status) {
-        $("#spinner").hide();
+        setState("error", "Server request failed: " + status);
       }
     });
   });
@@ -118,7 +134,5 @@ $(function() {
     }
   });
 
-  $("#spinner").hide();
-  $("#results-container").hide();
-  $("#error").hide();
+  setState("start");
 });

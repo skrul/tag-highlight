@@ -10,6 +10,7 @@ import re
 app = flask.Blueprint('tag-highlight', __name__, template_folder='templates',
                       static_folder='static')
 
+
 class TagLoc(object):
     def __init__(self, name, type, offset, length):
         self.name = name
@@ -18,19 +19,24 @@ class TagLoc(object):
         self.length = length
 
     def __repr__(self):
-        return '<%s> %d @%d,%d' % (self.name, self.type, self.offset, self.length)
+        return '<%s> %d @%d,%d' % (self.name, self.type, self.offset,
+                                   self.length)
 
 
 def parse_tag_locations(html):
     row_start_offsets = []
     pos = 0
+
+    # The tokenizer gives locations in row, col but we want to convert
+    # this to offset.  Build a list of row start offsets to help with this.
     for line in html.split('\n'):
         row_start_offsets.append(pos)
         pos += len(line) + 1
-    
+
     tok = tokenizer.HTMLTokenizer(html)
     tag_locations = []
-    tag_types = (constants.tokenTypes['StartTag'], constants.tokenTypes['EndTag'])
+    tag_types = (constants.tokenTypes['StartTag'],
+                 constants.tokenTypes['EndTag'])
     for token in tok:
         if not token['type'] in tag_types:
             continue
@@ -55,11 +61,12 @@ def parse_tag_locations(html):
             tag_start_chars += '/'
         tag_start_chars += token['name']
         tag_start_pos = html.rfind(tag_start_chars, 0, tag_end_pos)
+
         # If we don't find the start of the tag (which shouldn't
         # happen if the tokenizer is correct) then skip this tag.
         if tag_start_pos < 0:
             continue
-            
+
         tl = TagLoc(token['name'], token['type'], tag_start_pos,
                     tag_end_pos - tag_start_pos)
         tag_locations.append(tl)
@@ -78,8 +85,8 @@ def count_tags(tag_locations):
 def add_spans_to_html(html, tag_locations):
     out = []
     pos = 0
+    # Add a <span> around each tag whle escaping all other content.
     for tl in tag_locations:
-        # Add a <span> around each tag whle escaping all other content.
         if tl.offset > pos:
             out.append(cgi.escape(html[pos:tl.offset]))
             pos = tl.offset
@@ -105,7 +112,7 @@ def describe_page():
     # Basic URL validity test.
     if not re.match('^https?://.*\\..*', url):
         return flask.jsonify({'success': False, 'message': 'Invalid URL'})
-    
+
     try:
         r = requests.get(url)
     except IOError as e:

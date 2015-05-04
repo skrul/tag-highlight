@@ -1,8 +1,10 @@
-import tag_highlight
 import application
+import tag_highlight
 
 import httpretty
 import json
+import mox
+import requests
 import unittest
 
 
@@ -41,8 +43,9 @@ class AddSpansToHtmlTestCase(unittest.TestCase):
         html = '<i a="b">'
         tls = tag_highlight.parse_tag_locations(html)
         formatted = tag_highlight.add_spans_to_html(html, tls)
-        self.assertEqual('<span class="tag-i">&lt;i a="b"&gt;</span>', formatted)
-        
+        self.assertEqual('<span class="tag-i">&lt;i a="b"&gt;</span>',
+                         formatted)
+
     def test_content(self):
         html = '1<i>2</i>3'
         tls = tag_highlight.parse_tag_locations(html)
@@ -56,7 +59,9 @@ class AddSpansToHtmlTestCase(unittest.TestCase):
         tls = tag_highlight.parse_tag_locations(html)
         formatted = tag_highlight.add_spans_to_html(html, tls)
         self.assertEqual('&amp;amp;<span class="tag-p">&lt;p/&gt;</span>' +
-            '&amp;lt;<span class="tag-p">&lt;p/&gt;</span>&amp;gt;', formatted)
+                         '&amp;lt;<span class="tag-p">&lt;p/&gt;</span>' +
+                         '&amp;gt;',
+                         formatted)
 
 
 class CountTagsTestCase(unittest.TestCase):
@@ -70,6 +75,10 @@ class CountTagsTestCase(unittest.TestCase):
 class DescribePageTestCase(unittest.TestCase):
     def setUp(self):
         self.app = application.application.test_client()
+        self.mox = mox.Mox()
+
+    def tearDown(self):
+        self.mox.UnsetStubs()
 
     @httpretty.activate
     def test_success(self):
@@ -79,14 +88,36 @@ class DescribePageTestCase(unittest.TestCase):
             '/api/v1/describe-page?url=http://example.com/').data)
         self.assertEqual(True, r['success'])
         self.assertEqual(
-            '<span class="tag-html">&lt;html&gt;</span><span class="tag-html">' +
-            '&lt;/html&gt;</span>', r['highlighted_html'])
+            '<span class="tag-html">&lt;html&gt;</span>' +
+            '<span class="tag-html">&lt;/html&gt;</span>',
+            r['highlighted_html'])
         self.assertEqual({'html': 1}, r['tag_counts'])
 
     @httpretty.activate
-    def test_failed(self):
+    def test_not_found(self):
         httpretty.register_uri(httpretty.GET, "http://example.com/",
                                status=404)
         r = json.loads(self.app.get(
             '/api/v1/describe-page?url=http://example.com/').data)
-        self.assertEqual(False, r['success'])
+        self.assertEqual({'success': False, 'message': 'Not Found'}, r)
+
+    @httpretty.activate
+    def test_bad_url(self):
+        httpretty.register_uri(httpretty.GET, "http://example.com/",
+                               status=404)
+        r = json.loads(self.app.get(
+            '/api/v1/describe-page?url=xxx').data)
+        self.assertEqual({'success': False, 'message': 'Invalid URL'}, r)
+
+    @httpretty.activate
+    def test_timeout(self):
+        self.mox.StubOutWithMock(requests, 'get')
+
+        requests.get(mox.IgnoreArg()).AndRaise(
+            requests.exceptions.Timeout('timeout'))
+        self.mox.ReplayAll()
+
+        r = json.loads(self.app.get(
+            '/api/v1/describe-page?url=http://example.com/').data)
+        self.assertEqual({'success': False, 'message': 'timeout'}, r)
+        self.mox.VerifyAll()
